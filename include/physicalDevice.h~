@@ -1,0 +1,18 @@
+#ifndef PHYSICAL_DEVICE_H
+#define PHYSICAL_DEVICE_H
+
+#include "vulkan.h" 
+
+typedef struct {
+    uint32_t physicalDeviceCount;
+    VkPhysicalDevice* physicalDevices;
+    VkQueueFamilyProperties* queueFamilyProperties;
+    VkExtensionProperties* extensionProperties;
+    uint32_t graphicsIndex;
+    uint32_t deviceExtensionCount;
+    const char**  deviceExtensions;
+} PhysicalDevice;
+
+bool pickPhysicalDevice(Vulkan* vulkan, PhysicalDevice* physicalDevice); 
+
+#endif

@@ -1,0 +1,16 @@
+#ifndef PHYSICAL_DEVICE_H
+#define PHYSICAL_DEVICE_H
+
+#include "vulkan.h" 
+static const char *requiredDeviceExtensions[] = { "VK_KHR_swapchain" };
+
+typedef struct {
+    uint32_t graphicsIndex;
+
+    uint32_t deviceExtensionCount;
+    const char **deviceExtensions;
+} PhysicalDevice;
+
+bool pickPhysicalDevice(Vulkan *vulkan, PhysicalDevice *physicalDevice); 
+
+#endif
