@@ -8,7 +8,6 @@ bool createSwapChain(Vulkan *vulkan, SwapChain *swapChain, Glfw *glfw)
 	logMessage(LOG_ERROR, "Failed to create window surface [%d]\n", vulkan->result);
 	goto clean;
     }
-
     VkSurfaceCapabilitiesKHR surfaceCapabilities;
     vulkan->result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(vulkan->physicalDevice, 
 							       vulkan->surface, 
@@ -91,7 +90,6 @@ bool createSwapChain(Vulkan *vulkan, SwapChain *swapChain, Glfw *glfw)
 	.clipped = VK_TRUE,
 	.oldSwapchain = VK_NULL_HANDLE,
     };
-
     vulkan->result = vkCreateSwapchainKHR(vulkan->device, &swapChainInfo, NULL, &vulkan->swapChain);
     if (vulkan->result != VK_SUCCESS) {
 	logMessage(LOG_ERROR, "Failed to create swap chain [%d]\n", vulkan->result);
@@ -104,7 +102,6 @@ bool createSwapChain(Vulkan *vulkan, SwapChain *swapChain, Glfw *glfw)
 	logMessage(LOG_ERROR, "Failed to get swap chain images [%d]\n", vulkan->result);
 	goto clean;
     }     
-
     VkImageViewCreateInfo imageViewInfo = { 
         .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
 	.pNext = NULL,

@@ -1,15 +1,53 @@
 #include "physicalDevice.h"
 
+typedef struct {
+    VkResult tResult;
+    Vulkan *vulkan;
+    PhysicalDevice *physicalDevice;
+} QueueTask;
+
+void *findQueueFamily(void *arg) 
+{
+    QueueTask *queueTask = (QueueTask *)arg;
+    Vulkan *vulkan = queueTask->vulkan;
+    PhysicalDevice *physicalDevice = queueTask->physicalDevice;
+    VkResult lResult = queueTask->tResult; 
+
+    uint32_t queueFamilyPropertyCount;
+    VkQueueFamilyProperties *queueFamilyProperties = NULL;
+
+    vkGetPhysicalDeviceQueueFamilyProperties(vulkan->physicalDevice, &queueFamilyPropertyCount, NULL);
+    queueFamilyProperties = malloc(sizeof(*queueFamilyProperties) * queueFamilyPropertyCount);
+    vkGetPhysicalDeviceQueueFamilyProperties(vulkan->physicalDevice, &queueFamilyPropertyCount, queueFamilyProperties);
+    bool supportGraphics = false;
+    for (uint32_t i = 0; i < queueFamilyPropertyCount; ++i) {
+	if (queueFamilyProperties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
+	    physicalDevice->graphicsIndex = i;
+	    supportGraphics = true;
+	    break;
+	}
+    }
+    if (!supportGraphics) {
+	lResult = VK_ERROR_INITIALIZATION_FAILED;
+	logMessage(LOG_ERROR, "Graphics queue not supported\n");
+	goto clean;
+    }
+clean:
+    free(queueFamilyProperties);    
+    queueTask->tResult = lResult; 
+    return NULL;
+}
+
 bool pickPhysicalDevice(Vulkan *vulkan, PhysicalDevice *physicalDevice) 
 {
     uint32_t physicalDeviceCount;
     VkPhysicalDevice *physicalDevices = NULL;    
 
-    uint32_t queueFamilyPropertyCount;
-    VkQueueFamilyProperties *queueFamilyProperties = NULL;
-
     uint32_t extensionPropertyCount;
     VkExtensionProperties *extensionProperties = NULL;
+
+    pthread_t queueThread;
+    bool joined = false;
 
     vulkan->result = vkEnumeratePhysicalDevices(vulkan->instance, &physicalDeviceCount, NULL);
     
@@ -26,7 +64,6 @@ bool pickPhysicalDevice(Vulkan *vulkan, PhysicalDevice *physicalDevice)
 	logMessage(LOG_ERROR, "Physical Device not found [%d]\n", vulkan->result);
 	goto clean;
     }
-
     VkPhysicalDeviceProperties physicalDeviceProperties;
     for (uint32_t i = 0; i < physicalDeviceCount; ++i) {
 	vkGetPhysicalDeviceProperties(physicalDevices[i], &physicalDeviceProperties);
@@ -35,27 +72,19 @@ bool pickPhysicalDevice(Vulkan *vulkan, PhysicalDevice *physicalDevice)
 	    vulkan->physicalDevice = physicalDevices[i];
 	    break;
 	}
-	vulkan->physicalDevice = physicalDevices[i];
+    }
+    if (vulkan->physicalDevice == VK_NULL_HANDLE ) {	
+	vulkan->physicalDevice = physicalDevices[0];
     }
     vkGetPhysicalDeviceProperties(vulkan->physicalDevice, &physicalDeviceProperties);
     logMessage(LOG_INFO, "Selected GPU: [%s]\n", physicalDeviceProperties.deviceName);
 
-    vkGetPhysicalDeviceQueueFamilyProperties(vulkan->physicalDevice, &queueFamilyPropertyCount, NULL);
-    queueFamilyProperties = malloc(sizeof(*queueFamilyProperties) * queueFamilyPropertyCount);
-    vkGetPhysicalDeviceQueueFamilyProperties(vulkan->physicalDevice, &queueFamilyPropertyCount, queueFamilyProperties);
-    bool supportGraphics = false;
-    for (uint32_t i = 0; i < queueFamilyPropertyCount; ++i) {
-	if (queueFamilyProperties[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) {
-	    supportGraphics = true;
-	    physicalDevice->graphicsIndex = i;
-	    break;
-	}
-    }
-    if (!supportGraphics) {
-	vulkan->result = VK_ERROR_INITIALIZATION_FAILED;
-	logMessage(LOG_ERROR, "[%s]: Graphics queue not supported\n", physicalDeviceProperties.deviceName);
-	goto clean;
-    }
+    QueueTask queueTask = {
+	.vulkan = vulkan,
+	.physicalDevice = physicalDevice,
+	.tResult = VK_SUCCESS
+    };
+    pthread_create(&queueThread, NULL, findQueueFamily, &queueTask);
 
     vulkan->result = vkEnumerateDeviceExtensionProperties(vulkan->physicalDevice, NULL, &extensionPropertyCount, NULL);
     if (vulkan->result != VK_SUCCESS) {
@@ -68,37 +97,38 @@ bool pickPhysicalDevice(Vulkan *vulkan, PhysicalDevice *physicalDevice)
 	logMessage(LOG_ERROR, "Failed to enumerate device extension properties [%d]\n", vulkan->result);
 	goto clean;
     }
-
     physicalDevice->deviceExtensionCount = sizeof(requiredDeviceExtensions) / sizeof(requiredDeviceExtensions[0]);
     physicalDevice->deviceExtensions = malloc(sizeof(*physicalDevice->deviceExtensions) * physicalDevice->deviceExtensionCount);
     for (uint32_t i = 0; i < physicalDevice->deviceExtensionCount; ++i) {
 	physicalDevice->deviceExtensions[i] = strdup(requiredDeviceExtensions[i]);
     }
-
+    for (uint32_t i = 0; i < extensionPropertyCount; ++i) {
+	logMessage(LOG_INFO, "Available device extension: [%s]\n", extensionProperties[i].extensionName);
+    }
     for (uint32_t i = 0; i < physicalDevice->deviceExtensionCount; ++i) {
 	bool found = false;
 	for (uint32_t j = 0; j < extensionPropertyCount; ++j) {
-	    logMessage(LOG_INFO, "Available device extension: [%s]\n", extensionProperties[j].extensionName);
-	    if (strcmp(extensionProperties[j].extensionName, 
-		       physicalDevice->deviceExtensions[i]) == 0) {
-		logMessage(LOG_INFO, "[%s]: Device extension is supported: [%s]\n", 
-			   physicalDeviceProperties.deviceName,
-			   requiredDeviceExtensions[i]);
+	    if (strcmp(extensionProperties[j].extensionName, physicalDevice->deviceExtensions[i]) == 0) {
+		logMessage(LOG_INFO, "Enabled Device extension: [%s]\n", physicalDevice->deviceExtensions[i]);
 		found = true;
 		break;
 	    }
 	}
 	if (!found) {
 	    vulkan->result = VK_ERROR_INITIALIZATION_FAILED;
-	    logMessage(LOG_ERROR, "[%s]: Required physical device extension not supported: [%s]\n", 
-		       physicalDeviceProperties.deviceName,
-		       requiredDeviceExtensions[i]);
+	    logMessage(LOG_ERROR, "Required physical device extension not supported: [%s]\n", requiredDeviceExtensions[i]);
 	    goto clean;
 	}
     }
+    pthread_join(queueThread, NULL);
+    joined = true;
+    if (queueTask.tResult != VK_SUCCESS) {
+	logMessage(LOG_ERROR, "Graphics queue not supported\n");
+	goto clean;
+    }
     vulkan->result = VK_SUCCESS;
  clean:
-    free(queueFamilyProperties);
+    if (!joined) pthread_join(queueThread, NULL);
     free(extensionProperties);
     free(physicalDevices);
 
