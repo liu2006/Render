@@ -8,8 +8,6 @@
 #define ENABLE_VALIDATION 1
 #endif
 
-static const char *requiredLayers[] = {"VK_LAYER_KHRONOS_validation"};
-
 typedef struct {
     uint32_t extensionCount;
     const char **extensions;
@@ -18,6 +16,6 @@ typedef struct {
     const char **layers;
 } Instance;
 
-bool createInstance(Vulkan* vulkan, Instance* instance);
+bool createInstance(Vulkan *vulkan, Instance *instance);
 
 #endif

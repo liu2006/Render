@@ -7,9 +7,9 @@ typedef struct {
     VkExtent2D surfaceExtent;
     uint32_t imageCount;
 
-    uint32_t surfaceFormatCount;
-    uint32_t surfaceFormatIndex;
-    VkSurfaceFormatKHR *surfaceFormats;
+    uint32_t formatCount;
+    uint32_t formatIndex;
+    VkSurfaceFormatKHR *formats;
     
     uint32_t presentModeCount;
     uint32_t presentModeIndex;

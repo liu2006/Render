@@ -2,7 +2,6 @@
 #define PHYSICAL_DEVICE_H
 
 #include "vulkan.h" 
-static const char *requiredDeviceExtensions[] = { "VK_KHR_swapchain" };
 
 typedef struct {
     uint32_t graphicsIndex;

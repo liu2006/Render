@@ -1,15 +1,15 @@
 #include "vulkan.h"
 
-void logMessage(LogLevel level, const char* format, ...)
+void logMessage(LogLevel level, const char *format, ...)
 {
-    FILE* stream;
+    FILE *stream;
     if (level == LOG_NONE) return;
 
     stream = (level == LOG_ERROR) ? stderr : stdout;
     if (level < LOG_INFO || level > LOG_ERROR)
 	return;
 
-    const char* levelName[] = {
+    const char *levelName[] = {
 	[LOG_INFO] = "INFO",
 	[LOG_WARNING] = "WARNING",
 	[LOG_ERROR] = "ERROR"

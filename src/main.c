@@ -51,17 +51,24 @@ int main(int argc, const char** argv)
     fflush(stdout);
 
  clean:
-    free(vulkan.swapChainImages);
+    for (uint32_t i = 0; i < swapChain.imageCount; ++i) {
+	vkDestroyImageView(vulkan.device, vulkan.imageViews[i], NULL);
+    }
+    free(vulkan.imageViews);
+    free(vulkan.images);
+
     if (vulkan.swapChain != VK_NULL_HANDLE) {
 	vkDestroySwapchainKHR(vulkan.device, vulkan.swapChain, NULL);
     }
+
     if (vulkan.surface != VK_NULL_HANDLE) {
 	vkDestroySurfaceKHR(vulkan.instance, vulkan.surface, NULL);
     }
+
     if (vulkan.device != VK_NULL_HANDLE) {
 	vkDestroyDevice(vulkan.device, NULL);
     }
-    
+
     for (uint32_t i = 0; i < physicalDevice.deviceExtensionCount; ++i) {
 	free((void *)physicalDevice.deviceExtensions[i]);
     }
@@ -69,6 +76,7 @@ int main(int argc, const char** argv)
     if (vulkan.instance != VK_NULL_HANDLE) {
 	vkDestroyInstance(vulkan.instance, NULL);
     }
+
     for (uint32_t i = 0; i < instance.layerCount; ++i) {
 	free((void *)instance.layers[i]);
     }

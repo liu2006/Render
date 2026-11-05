@@ -1,3 +1,4 @@
+#include "vulkan.h"
 #include "instance.h"
 
 bool createInstance(Vulkan *vulkan, Instance *instance)
@@ -31,6 +32,7 @@ bool createInstance(Vulkan *vulkan, Instance *instance)
 	for (uint32_t j = 0; j < layerPropertyCount; ++j) {
 	    logMessage(LOG_INFO, "Available layer: [%s]\n", layerProperties[j].layerName);
 	    if (strcmp(layerProperties[j].layerName, instance->layers[i]) == 0) {
+		logMessage(LOG_INFO, "Enabled layer: [%s]\n", layerProperties[j].layerName);
 		found = true;
 		break;
 	    }
@@ -41,6 +43,8 @@ bool createInstance(Vulkan *vulkan, Instance *instance)
 	    goto clean;
 	}
     }
+#else
+    logMessage(LOG_INFO, "Layer not enabled\n");    
 #endif
 
     instance->extensions = glfwGetRequiredInstanceExtensions(&instance->extensionCount);

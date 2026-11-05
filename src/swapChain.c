@@ -28,15 +28,15 @@ bool createSwapChain(Vulkan *vulkan, SwapChain *swapChain, Glfw *glfw)
 	swapChain->imageCount = 2;
     }
     vulkan->result = vkGetPhysicalDeviceSurfaceFormatsKHR(vulkan->physicalDevice, 
-							  vulkan->surface, &swapChain->surfaceFormatCount, NULL);
+							  vulkan->surface, &swapChain->formatCount, NULL);
     if (vulkan->result != VK_SUCCESS) {
 	logMessage(LOG_ERROR, "Failed to get surface formats [%d]\n", vulkan->result);
 	goto clean;
     } 
-    swapChain->surfaceFormats = malloc(sizeof(*swapChain->surfaceFormats) * swapChain->surfaceFormatCount);
+    swapChain->formats = malloc(sizeof(*swapChain->formats) * swapChain->formatCount);
     vulkan->result = vkGetPhysicalDeviceSurfaceFormatsKHR(vulkan->physicalDevice, 
-							  vulkan->surface, &swapChain->surfaceFormatCount, 
-							  swapChain->surfaceFormats);
+							  vulkan->surface, &swapChain->formatCount, 
+							  swapChain->formats);
     if (vulkan->result != VK_SUCCESS) {
 	logMessage(LOG_ERROR, "Failed to get surface formats [%d]\n", vulkan->result);
 	goto clean;
@@ -58,10 +58,10 @@ bool createSwapChain(Vulkan *vulkan, SwapChain *swapChain, Glfw *glfw)
 	logMessage(LOG_ERROR, "Failed to get surface present modes [%d]\n", vulkan->result);
 	goto clean;
     }     
-    for (uint32_t i = 0; i < swapChain->surfaceFormatCount; ++i) {
-	if (swapChain->surfaceFormats[i].format == VK_FORMAT_B8G8R8A8_SRGB &&
-	    swapChain->surfaceFormats[i].colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
-	    swapChain->surfaceFormatIndex = i;
+    for (uint32_t i = 0; i < swapChain->formatCount; ++i) {
+	if (swapChain->formats[i].format == VK_FORMAT_B8G8R8A8_SRGB &&
+	    swapChain->formats[i].colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+	    swapChain->formatIndex = i;
 	    break;
 	}
     }
@@ -77,8 +77,8 @@ bool createSwapChain(Vulkan *vulkan, SwapChain *swapChain, Glfw *glfw)
 	.flags = 0,
 	.surface = vulkan->surface,
 	.minImageCount = swapChain->imageCount,
-	.imageFormat = swapChain->surfaceFormats[swapChain->surfaceFormatIndex].format,
-	.imageColorSpace = swapChain->surfaceFormats[swapChain->surfaceFormatIndex].colorSpace,
+	.imageFormat = swapChain->formats[swapChain->formatIndex].format,
+	.imageColorSpace = swapChain->formats[swapChain->formatIndex].colorSpace,
 	.imageExtent = swapChain->surfaceExtent,
 	.imageArrayLayers = 1,
 	.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
@@ -98,22 +98,47 @@ bool createSwapChain(Vulkan *vulkan, SwapChain *swapChain, Glfw *glfw)
 	goto clean;
     }     
     logMessage(LOG_INFO, "Swap chain created\n", vulkan->result);
-    vulkan->swapChainImages = malloc(sizeof(*vulkan->swapChainImages) * swapChain->imageCount);
-    vulkan->result = vkGetSwapchainImagesKHR(vulkan->device, vulkan->swapChain, &swapChain->imageCount, vulkan->swapChainImages);
+    vulkan->images = malloc(sizeof(*vulkan->images) * swapChain->imageCount);
+    vulkan->result = vkGetSwapchainImagesKHR(vulkan->device, vulkan->swapChain, &swapChain->imageCount, vulkan->images);
     if (vulkan->result != VK_SUCCESS) {
 	logMessage(LOG_ERROR, "Failed to get swap chain images [%d]\n", vulkan->result);
 	goto clean;
     }     
 
-
-
-
-
-
+    VkImageViewCreateInfo imageViewInfo = { 
+        .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+	.pNext = NULL,
+	.flags = 0,
+	.image = VK_NULL_HANDLE,
+	.viewType = VK_IMAGE_VIEW_TYPE_2D,
+	.format = swapChain->formats[swapChain->formatIndex].format,
+	.components = {
+	    .r = VK_COMPONENT_SWIZZLE_IDENTITY,
+	    .g = VK_COMPONENT_SWIZZLE_IDENTITY,
+	    .b = VK_COMPONENT_SWIZZLE_IDENTITY,
+	    .a = VK_COMPONENT_SWIZZLE_IDENTITY
+	},
+	.subresourceRange = { 
+	    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+	    .baseMipLevel = 0,
+	    .levelCount = 1,
+	    .baseArrayLayer = 0,
+	    .layerCount = 1
+	}
+    };
+    vulkan->imageViews = malloc(sizeof(*vulkan->imageViews) * swapChain->imageCount);
+    for (uint32_t i = 0; i < swapChain->imageCount; ++i) {
+	imageViewInfo.image = vulkan->images[i]; 
+	vulkan->result = vkCreateImageView(vulkan->device, &imageViewInfo, NULL, &vulkan->imageViews[i]);
+	if (vulkan->result != VK_SUCCESS) {
+	    logMessage(LOG_ERROR, "Failed to create image view [%d]\n", vulkan->result); 
+	    goto clean;
+	}
+    }
     vulkan->result = VK_SUCCESS;
 
 clean:
     free(swapChain->presentModes);
-    free(swapChain->surfaceFormats);
+    free(swapChain->formats);
     return (vulkan->result == VK_SUCCESS) ? true : false;
 } 

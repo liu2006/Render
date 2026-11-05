@@ -6,6 +6,7 @@
 #include <stdio.h> 
 #include <stdlib.h>
 #include <stdarg.h>
+#include <pthread.h> 
 #include <stdbool.h>
 #include <string.h>
 #include <assert.h>
@@ -14,7 +15,9 @@
 #define WIDTH 1920
 #define HEIGHT 1080
 #define RATE 165
-#define LOG_BUFFER_SIZE 256
+
+static const char *requiredLayers[] = { "VK_LAYER_KHRONOS_validation" };
+static const char *requiredDeviceExtensions[] = { "VK_KHR_swapchain" };
 
 typedef struct {
     VkResult result;
@@ -24,7 +27,8 @@ typedef struct {
     VkQueue graphicsQueue;
     VkSurfaceKHR surface;
     VkSwapchainKHR swapChain;
-    VkImage* swapChainImages;
+    VkImage *images;
+    VkImageView *imageViews;
 } Vulkan;
 
 typedef enum {
@@ -34,6 +38,6 @@ typedef enum {
     LOG_ERROR = 3
 } LogLevel;
 
-void logMessage(LogLevel level, const char* format, ...);
+void logMessage(LogLevel level, const char *format, ...);
 #endif
 
