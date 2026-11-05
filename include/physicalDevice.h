@@ -8,6 +8,8 @@ typedef struct {
 
     uint32_t deviceExtensionCount;
     const char **deviceExtensions;
+
+    VkSampleCountFlagBits msaaSamples;
 } PhysicalDevice;
 
 bool pickPhysicalDevice(Vulkan *vulkan, PhysicalDevice *physicalDevice); 

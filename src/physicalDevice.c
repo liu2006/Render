@@ -86,6 +86,25 @@ bool pickPhysicalDevice(Vulkan *vulkan, PhysicalDevice *physicalDevice)
     };
     pthread_create(&queueThread, NULL, findQueueFamily, &queueTask);
 
+    const VkSampleCountFlagBits sampleCounts[] = {
+	VK_SAMPLE_COUNT_64_BIT,
+	VK_SAMPLE_COUNT_32_BIT,
+	VK_SAMPLE_COUNT_16_BIT,
+	VK_SAMPLE_COUNT_8_BIT,
+	VK_SAMPLE_COUNT_4_BIT,
+	VK_SAMPLE_COUNT_2_BIT
+    };
+    VkSampleCountFlags counts =
+	physicalDeviceProperties.limits.framebufferColorSampleCounts & physicalDeviceProperties.limits.framebufferDepthSampleCounts;
+
+    for (size_t i = 0; i < sizeof(sampleCounts) / sizeof(sampleCounts[0]); ++i) {
+	if (counts & sampleCounts[i]) {
+            physicalDevice->msaaSamples = sampleCounts[i];
+            break;
+	}
+    }
+    logMessage(LOG_INFO, "Selected msaa [x%u] samples\n", physicalDevice->msaaSamples);
+
     vulkan->result = vkEnumerateDeviceExtensionProperties(vulkan->physicalDevice, NULL, &extensionPropertyCount, NULL);
     if (vulkan->result != VK_SUCCESS) {
 	logMessage(LOG_ERROR, "Failed to enumerate device extension properties [%d]\n", vulkan->result);
