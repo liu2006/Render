@@ -169,5 +169,4 @@ bool pickPhysicalDevice(Vulkan *vulkan, PhysicalDevice *physicalDevice)
     return (vulkan->result == VK_SUCCESS) ? true : false; 
 }
 #endif
-
 #endif

@@ -16,10 +16,10 @@ typedef struct {
     VkPresentModeKHR *presentModes;
 } SwapChain;
 
-bool createSwapChain(Vulkan *vulkan, SwapChain *swapChain, Glfw *glfw);
+bool createSwapChain(Vulkan *vulkan, PhysicalDevice *physicalDevice, SwapChain *swapChain, Glfw *glfw);
 
 #if defined(SWAPCHAIN_IMPLEMENTATION)
-bool createSwapChain(Vulkan *vulkan, SwapChain *swapChain, Glfw *glfw) 
+bool createSwapChain(Vulkan *vulkan, PhysicalDevice *physicalDevice, SwapChain *swapChain, Glfw *glfw) 
 {
     vulkan->result = glfwCreateWindowSurface(vulkan->instance, glfw->window, NULL, &vulkan->surface);
     if (vulkan->result != VK_SUCCESS) {
@@ -151,24 +151,28 @@ bool createSwapChain(Vulkan *vulkan, SwapChain *swapChain, Glfw *glfw)
 	}
     }
 
-    /* const VkImageCreateInfo msaaImageInfo = { */
-    /* 	.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO, */
-    /* 	.pNext = NULL, */
-    /* 	VkImageCreateFlags       flags; */
-    /* 	VkImageType              imageType; */
-    /* 	VkFormat                 format; */
-    /* 	VkExtent3D               extent; */
-    /* 	uint32_t                 mipLevels; */
-    /* 	uint32_t                 arrayLayers; */
-    /* 	VkSampleCountFlagBits    samples; */
-    /* 	VkImageTiling            tiling; */
-    /* 	VkImageUsageFlags        usage; */
-    /* 	VkSharingMode            sharingMode; */
-    /* 	uint32_t                 queueFamilyIndexCount; */
-    /* 	const uint32_t*          pQueueFamilyIndices; */
-    /* 	VkImageLayout            initialLayout; */
-    /* } */
-    
+    const VkImageCreateInfo msaaImageInfo = {
+	.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+	.pNext = NULL,
+	.flags = 0,
+	.imageType = VK_IMAGE_TYPE_2D,
+	.format = swapChain->formats[swapChain->formatIndex].format,
+	.extent = { 
+	    .width = swapChain->surfaceExtent.width, 
+	    .height = swapChain->surfaceExtent.height,
+	    .depth = 1
+	},
+	.mipLevels = 1,
+	.arrayLayers = 1,
+	.samples = physicalDevice->msaaSamples,
+	.tiling = VK_IMAGE_TILING_OPTIMAL,
+	.usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT,
+	.sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+	.queueFamilyIndexCount = 0,
+	.pQueueFamilyIndices = NULL,
+	.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+    };
+    (void)msaaImageInfo; 
     vulkan->result = VK_SUCCESS;
     
 clean:

@@ -29,22 +29,18 @@ int main(int argc, const char** argv)
 	success = false;
 	goto clean;
     };
-
     if (!pickPhysicalDevice(&vulkan, &physicalDevice)) {
 	success = false;
 	goto clean;
     }
-    
     if (!createLogicalDevice(&vulkan, &logicalDevice, &physicalDevice)) {
 	success = false;
 	goto clean;
     }
-    
-    if (!createSwapChain(&vulkan, &swapChain, &glfw)) {
+    if (!createSwapChain(&vulkan, &physicalDevice, &swapChain, &glfw)) {
 	success = false;
 	goto clean;
     }
-
     struct timespec startTime, currentTime;
     clock_gettime(CLOCK_MONOTONIC, &startTime);
     while (!glfwWindowShouldClose(glfw.window)) { 
@@ -67,23 +63,18 @@ int main(int argc, const char** argv)
     if (vulkan.swapChain != VK_NULL_HANDLE) {
 	vkDestroySwapchainKHR(vulkan.device, vulkan.swapChain, NULL);
     }
-
     if (vulkan.surface != VK_NULL_HANDLE) {
 	vkDestroySurfaceKHR(vulkan.instance, vulkan.surface, NULL);
     }
-
     if (vulkan.device != VK_NULL_HANDLE) {
 	vkDestroyDevice(vulkan.device, NULL);
     }
-
     for (uint32_t i = 0; i < physicalDevice.deviceExtensionCount; ++i) {
 	free((void *)physicalDevice.deviceExtensions[i]);
     }
-
     if (vulkan.instance != VK_NULL_HANDLE) {
 	vkDestroyInstance(vulkan.instance, NULL);
     }
-
     for (uint32_t i = 0; i < instance.layerCount; ++i) {
 	free((void *)instance.layers[i]);
     }
