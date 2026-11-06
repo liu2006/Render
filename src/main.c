@@ -1,3 +1,10 @@
+#define VULKAN_IMPLEMENTATION
+#define GLFW_IMPLEMENTATION
+#define INSTANCE_IMPLEMENTATION
+#define PHYSICAL_DEVICE_IMPLEMENTATION
+#define LOGICAL_DEVICE_IMPLEMENTATION
+#define SWAPCHAIN_IMPLEMENTATION
+
 #include "vulkan.h"
 #include "glfw.h"
 #include "instance.h"
