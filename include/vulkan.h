@@ -29,6 +29,10 @@ typedef struct {
     VkSwapchainKHR swapChain;
     VkImage *images;
     VkImageView *imageViews;
+    
+    VkImage msaaImage;
+    VkDeviceMemory msaaImageMemory;
+    VkImageView msaaImageView;
 } Vulkan;
 
 typedef enum {

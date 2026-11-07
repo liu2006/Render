@@ -172,7 +172,85 @@ bool createSwapChain(Vulkan *vulkan, PhysicalDevice *physicalDevice, SwapChain *
 	.pQueueFamilyIndices = NULL,
 	.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
     };
-    (void)msaaImageInfo; 
+    
+    vulkan->result = vkCreateImage(vulkan->device, &msaaImageInfo, NULL, &vulkan->msaaImage);
+
+    if (vulkan->result != VK_SUCCESS) {
+	logMessage(LOG_ERROR, "Failed to create msaa image\n");
+	goto clean;
+    }
+
+    /* struct VkMemoryRequirements { */
+    /* 	VkDeviceSize    size; */
+    /* 	VkDeviceSize    alignment; */
+    /* 	uint32_t        memoryTypeBits; */
+    /* } VkMemoryRequirements; */
+
+    VkMemoryRequirements imageMemoryRequirements;
+    vkGetImageMemoryRequirements(vulkan->device, vulkan->msaaImage,&imageMemoryRequirements);
+
+    /* struct VkPhysicalDeviceMemoryProperties { */
+    /* 	uint32_t        memoryTypeCount; */
+    /* 	VkMemoryType    memoryTypes[VK_MAX_MEMORY_TYPES]; */
+    /* 	uint32_t        memoryHeapCount; */
+    /* 	VkMemoryHeap    memoryHeaps[VK_MAX_MEMORY_HEAPS]; */
+    /* } VkPhysicalDeviceMemoryProperties; */
+    VkPhysicalDeviceMemoryProperties deviceMemoryProperties;
+
+    vkGetPhysicalDeviceMemoryProperties(vulkan->physicalDevice, &deviceMemoryProperties);
+    uint32_t memoryTypeIndex = UINT32_MAX;
+    for (uint32_t i = 0; i < deviceMemoryProperties.memoryTypeCount; ++i) {
+	if (deviceMemoryProperties.memoryTypes[i].propertyFlags & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT) {
+	    memoryTypeIndex = i;
+	    break;
+	}
+    }
+    if (memoryTypeIndex == UINT32_MAX) {
+	logMessage(LOG_ERROR, "Failed to find a suitable memory type");
+	goto clean;
+    }
+    const VkMemoryAllocateInfo allocateInfo = {
+	.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO,
+	.pNext = NULL,
+	.allocationSize = imageMemoryRequirements.size,
+	.memoryTypeIndex = memoryTypeIndex
+    };    
+    vulkan->result = vkAllocateMemory(vulkan->device, &allocateInfo, NULL, &vulkan->msaaImageMemory);
+    if (vulkan->result != VK_SUCCESS) {
+	logMessage(LOG_ERROR, "Failed to allocate memory for MSAA image\n");
+	goto clean;
+    }
+    vulkan->result = vkBindImageMemory(vulkan->device, vulkan->msaaImage, vulkan->msaaImageMemory, 0);
+    if (vulkan->result != VK_SUCCESS) {
+	logMessage(LOG_ERROR, "Failed to bind memory for MSAA image\n");
+	goto clean;
+    }
+    const VkImageViewCreateInfo msaaImageViewInfo = {
+	.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+	.pNext = NULL,
+	.flags = 0,
+	.image = vulkan->msaaImage,
+	.viewType = VK_IMAGE_VIEW_TYPE_2D,
+	.format = swapChain->formats[swapChain->formatIndex].format,
+	.components = {
+	    .r = VK_COMPONENT_SWIZZLE_IDENTITY,
+	    .g = VK_COMPONENT_SWIZZLE_IDENTITY,
+	    .b = VK_COMPONENT_SWIZZLE_IDENTITY,
+	    .a = VK_COMPONENT_SWIZZLE_IDENTITY
+	},
+	.subresourceRange = { 
+	    .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+	    .baseMipLevel = 0,
+	    .levelCount = 1,
+	    .baseArrayLayer = 0,
+	    .layerCount = 1
+	}
+    };
+    vulkan->result = vkCreateImageView(vulkan->device, &msaaImageViewInfo, NULL, &vulkan->msaaImageView);
+    if (vulkan->result != VK_SUCCESS) {
+	logMessage(LOG_ERROR, "Failed to create image view for MSAA");
+	goto clean;
+    }
     vulkan->result = VK_SUCCESS;
     
 clean:

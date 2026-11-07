@@ -54,6 +54,10 @@ int main(int argc, const char** argv)
     fflush(stdout);
 
  clean:
+    vkDestroyImage(vulkan.device, vulkan.msaaImage, NULL);
+    vkFreeMemory(vulkan.device, vulkan.msaaImageMemory, NULL);
+    vkDestroyImageView(vulkan.device, vulkan.msaaImageView, NULL);
+
     for (uint32_t i = 0; i < swapChain.imageCount; ++i) {
 	vkDestroyImageView(vulkan.device, vulkan.imageViews[i], NULL);
     }
