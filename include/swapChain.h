@@ -180,21 +180,9 @@ bool createSwapChain(Vulkan *vulkan, PhysicalDevice *physicalDevice, SwapChain *
 	goto clean;
     }
 
-    /* struct VkMemoryRequirements { */
-    /* 	VkDeviceSize    size; */
-    /* 	VkDeviceSize    alignment; */
-    /* 	uint32_t        memoryTypeBits; */
-    /* } VkMemoryRequirements; */
-
     VkMemoryRequirements imageMemoryRequirements;
     vkGetImageMemoryRequirements(vulkan->device, vulkan->msaaImage,&imageMemoryRequirements);
 
-    /* struct VkPhysicalDeviceMemoryProperties { */
-    /* 	uint32_t        memoryTypeCount; */
-    /* 	VkMemoryType    memoryTypes[VK_MAX_MEMORY_TYPES]; */
-    /* 	uint32_t        memoryHeapCount; */
-    /* 	VkMemoryHeap    memoryHeaps[VK_MAX_MEMORY_HEAPS]; */
-    /* } VkPhysicalDeviceMemoryProperties; */
     VkPhysicalDeviceMemoryProperties deviceMemoryProperties;
 
     vkGetPhysicalDeviceMemoryProperties(vulkan->physicalDevice, &deviceMemoryProperties);
