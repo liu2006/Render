@@ -4,6 +4,7 @@
 #define PHYSICAL_DEVICE_IMPLEMENTATION
 #define LOGICAL_DEVICE_IMPLEMENTATION
 #define SWAPCHAIN_IMPLEMENTATION
+#define PIPELINE_IMPLEMENTATION
 
 #include "vulkan.h"
 #include "glfw.h"
@@ -11,11 +12,14 @@
 #include "physicalDevice.h"
 #include "logicalDevice.h"
 #include "swapChain.h"
+#include "pipeline.h"
 
-int main(int argc, const char** argv)
+int main(int argc, const char **argv)
 {
-    (void)argc;
-    (void)argv;
+    if (argc < 2) {
+        logMessage(LOG_ERROR, "Usage: %s <shader-file>\n", argv[0]);
+        return 1;
+    }
     bool success = true;
     Glfw glfw = { .width = WIDTH, .height = HEIGHT, .rate = RATE};
     Vulkan vulkan = {0};
@@ -23,6 +27,7 @@ int main(int argc, const char** argv)
     PhysicalDevice physicalDevice = {0};
     LogicalDevice logicalDevice = {0};
     SwapChain swapChain = {0};
+    Pipeline pipeline = {0};
 
     if (!createWindow(&glfw)) return 1;
     if (!createInstance(&vulkan, &instance)) {
@@ -41,6 +46,11 @@ int main(int argc, const char** argv)
 	success = false;
 	goto clean;
     }
+    if (!createPipeline(&vulkan, &pipeline, argv[1])) {
+	success = false;
+	goto clean;
+    }
+    
     struct timespec startTime, currentTime;
     clock_gettime(CLOCK_MONOTONIC, &startTime);
     while (!glfwWindowShouldClose(glfw.window)) { 
@@ -54,9 +64,14 @@ int main(int argc, const char** argv)
     fflush(stdout);
 
  clean:
+    if (vkDeviceWaitIdle(vulkan.device) != VK_SUCCESS) {
+	logMessage(LOG_ERROR, "Failed to wait for device idle");
+    }
+    
+    free(pipeline.spirvBuffer); 
+    vkDestroyImageView(vulkan.device, vulkan.msaaImageView, NULL);
     vkDestroyImage(vulkan.device, vulkan.msaaImage, NULL);
     vkFreeMemory(vulkan.device, vulkan.msaaImageMemory, NULL);
-    vkDestroyImageView(vulkan.device, vulkan.msaaImageView, NULL);
 
     for (uint32_t i = 0; i < swapChain.imageCount; ++i) {
 	vkDestroyImageView(vulkan.device, vulkan.imageViews[i], NULL);

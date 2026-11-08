@@ -118,7 +118,7 @@ bool pickPhysicalDevice(Vulkan *vulkan, PhysicalDevice *physicalDevice)
             break;
 	}
     }
-    logMessage(LOG_INFO, "Selected msaa [x%u] samples\n", physicalDevice->msaaSamples);
+    logMessage(LOG_INFO, "Selected MSAA [x%u] samples\n", physicalDevice->msaaSamples);
 
     vulkan->result = vkEnumerateDeviceExtensionProperties(vulkan->physicalDevice, NULL, &extensionPropertyCount, NULL);
     if (vulkan->result != VK_SUCCESS) {

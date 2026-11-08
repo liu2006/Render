@@ -63,7 +63,8 @@ bool createLogicalDevice(Vulkan *vulkan, LogicalDevice *logicalDevice, PhysicalD
 	}
 	logMessage(LOG_INFO, "Logical device created\n");
 	vkGetDeviceQueue(vulkan->device, physicalDevice->graphicsIndex, 0, &vulkan->graphicsQueue);
-	return true;
+	vulkan->result = VK_SUCCESS;
+	return (vulkan->result == VK_SUCCESS) ? true : false;
     }
 #endif
     
