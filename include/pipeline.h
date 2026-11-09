@@ -64,7 +64,27 @@ bool createPipeline(Vulkan *vulkan, Pipeline *pipeline, const char *fname);
 	    logMessage(LOG_ERROR, "Failed to create shader module\n");
 	    goto clean;
 	}
+	const VkPipelineShaderStageCreateInfo vertShaderStageInfo = {
+	    .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+	    .pNext = NULL,
+	    .flags = 0,
+	    .stage = VK_SHADER_STAGE_VERTEX_BIT,
+	    .module = vulkan->shaderModule,
+	    .pName = "vertMain",
+	    .pSpecializationInfo = NULL
+	};
+	const VkPipelineShaderStageCreateInfo fragShaderStageInfo = {
+	    .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
+	    .pNext = NULL,
+	    .flags = 0,
+	    .stage = VK_SHADER_STAGE_FRAGMENT_BIT,
+	    .module = vulkan->shaderModule,
+	    .pName = "fragMain",
+	    .pSpecializationInfo = NULL
+	};
+	const VkPipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
 	vulkan->result = VK_SUCCESS;
+	
  clean:
 	return (vulkan->result != VK_SUCCESS) ? false : true;
     }
