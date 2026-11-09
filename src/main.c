@@ -67,7 +67,10 @@ int main(int argc, const char **argv)
     if (vkDeviceWaitIdle(vulkan.device) != VK_SUCCESS) {
 	logMessage(LOG_ERROR, "Failed to wait for device idle");
     }
-    
+
+    if (vulkan.shaderModule != VK_NULL_HANDLE) {
+	vkDestroyShaderModule(vulkan.device, vulkan.shaderModule, NULL);
+    }
     free(pipeline.spirvBuffer); 
     vkDestroyImageView(vulkan.device, vulkan.msaaImageView, NULL);
     vkDestroyImage(vulkan.device, vulkan.msaaImage, NULL);

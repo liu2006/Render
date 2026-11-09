@@ -244,7 +244,7 @@ bool createSwapChain(Vulkan *vulkan, PhysicalDevice *physicalDevice, SwapChain *
 clean:
     free(swapChain->presentModes);
     free(swapChain->formats);
-    return (vulkan->result == VK_SUCCESS) ? true : false;
+    return (vulkan->result != VK_SUCCESS) ? false : true;
 } 
 #endif
 

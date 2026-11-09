@@ -33,6 +33,8 @@ typedef struct {
     VkImage msaaImage;
     VkDeviceMemory msaaImageMemory;
     VkImageView msaaImageView;
+
+    VkShaderModule shaderModule;
 } Vulkan;
 
 typedef enum {

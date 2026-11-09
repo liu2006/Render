@@ -164,7 +164,7 @@ bool createInstance(Vulkan *vulkan, Instance *instance);
  clean:
 	if (!joined) pthread_join(layerThread, NULL);
 	free(extensionProperties);
-	return (vulkan->result == VK_SUCCESS) ? true : false; 
+	return (vulkan->result != VK_SUCCESS) ? false : true;
     }
 #endif
 

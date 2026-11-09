@@ -165,8 +165,8 @@ bool pickPhysicalDevice(Vulkan *vulkan, PhysicalDevice *physicalDevice)
     if (!joined) pthread_join(queueThread, NULL);
     free(extensionProperties);
     free(physicalDevices);
-
-    return (vulkan->result == VK_SUCCESS) ? true : false; 
+    
+    return (vulkan->result != VK_SUCCESS) ? false : true;
 }
 #endif
 #endif

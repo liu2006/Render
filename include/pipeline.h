@@ -51,8 +51,22 @@ bool createPipeline(Vulkan *vulkan, Pipeline *pipeline, const char *fname);
 	}
 	logMessage(LOG_INFO, "Shader file read successfully\n");
 	fclose(shaderFile);
+
+	const VkShaderModuleCreateInfo shaderModuleInfo = {
+	    .sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO,
+	    .pNext = NULL,
+	    .flags = 0,
+	    .codeSize = pipeline->spirvSize,
+	    .pCode = pipeline->spirvBuffer
+	};
+	vulkan->result = vkCreateShaderModule(vulkan->device,&shaderModuleInfo, NULL, &vulkan->shaderModule);
+	if (vulkan->result != VK_SUCCESS) {
+	    logMessage(LOG_ERROR, "Failed to create shader module\n");
+	    goto clean;
+	}
+	vulkan->result = VK_SUCCESS;
  clean:
-	return (vulkan->result == VK_SUCCESS) ? true : false;
+	return (vulkan->result != VK_SUCCESS) ? false : true;
     }
 #endif
 
