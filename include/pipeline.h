@@ -2,7 +2,7 @@
 #define PIPELINE_H
 
 #include "vulkan.h"
-
+#include "vertexBuffer.h"
 typedef struct {
     size_t spirvSize;
     uint32_t *spirvBuffer;
@@ -82,7 +82,44 @@ bool createPipeline(Vulkan *vulkan, Pipeline *pipeline, const char *fname);
 	    .pName = "fragMain",
 	    .pSpecializationInfo = NULL
 	};
-	const VkPipelineShaderStageCreateInfo shaderStages[] = {vertShaderStageInfo, fragShaderStageInfo};
+	const VkPipelineShaderStageCreateInfo shaderStages[] = { vertShaderStageInfo, fragShaderStageInfo };
+
+	const VkVertexInputBindingDescription vertexInputBindingDescription = {
+	    .binding = 0,
+	    .stride = sizeof(Vertex),
+	    .inputRate = VK_VERTEX_INPUT_RATE_VERTEX
+	};
+	const VkVertexInputAttributeDescription vertexInputAttributeDescriptions[2] = {
+	    {
+		.location = 0,
+		.binding = 0,
+		.format = VK_FORMAT_R32G32_SFLOAT,
+		.offset = offsetof(Vertex, position),
+	    }, 
+	    {
+		.location = 1,
+		.binding = 0,
+		.format = VK_FORMAT_R32G32B32_SFLOAT,
+		.offset = offsetof(Vertex, color),
+	    }
+	};
+	const VkPipelineVertexInputStateCreateInfo vertexInputInfo = {
+	    .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO,
+	    .pNext = NULL,
+	    .flags = 0,
+	    .vertexBindingDescriptionCount = 1,
+	    .pVertexBindingDescriptions = &vertexInputBindingDescription,
+	    .vertexAttributeDescriptionCount = 2,
+	    .pVertexAttributeDescriptions = vertexInputAttributeDescriptions
+	};
+	const VkDynamicState dynamicStates[] = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR};
+	const VkPipelineDynamicStateCreateInfo dynamicStateInfo = {
+	    .sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
+	    .pNext = NULL,
+	    .flags = 0,
+	    .dynamicStateCount = sizeof(dynamicStates) / sizeof(*dynamicStates),
+	    .pDynamicStates = dynamicStates
+	};
 	vulkan->result = VK_SUCCESS;
 	
  clean:

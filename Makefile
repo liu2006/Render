@@ -1,4 +1,4 @@
-CC := clang
+CC := gcc
 CFLAGS := -Wall -Wextra -g -O0 -MMD -MP 
 CPPFLAGS := -Iinclude -Ivendor/glfw/include -Ivendor/vulkan/x86_64/include
 LDFLAGS := -Lvendor/glfw/lib -Lvendor/vulkan/x86_64/lib

@@ -5,6 +5,7 @@
 #define LOGICAL_DEVICE_IMPLEMENTATION
 #define SWAPCHAIN_IMPLEMENTATION
 #define PIPELINE_IMPLEMENTATION
+#define VERTEX_BUFFER_IMPLEMENTATION
 
 #include "vulkan.h"
 #include "glfw.h"
@@ -13,6 +14,7 @@
 #include "logicalDevice.h"
 #include "swapChain.h"
 #include "pipeline.h"
+#include "vertexBuffer.h"
 
 int main(int argc, const char **argv)
 {
@@ -20,7 +22,7 @@ int main(int argc, const char **argv)
         logMessage(LOG_ERROR, "Usage: %s <shader-file>\n", argv[0]);
         return 1;
     }
-    bool success = true;
+    bool result = true;
     Glfw glfw = { .width = WIDTH, .height = HEIGHT, .rate = RATE};
     Vulkan vulkan = {0};
     Instance instance = {0};
@@ -31,23 +33,27 @@ int main(int argc, const char **argv)
 
     if (!createWindow(&glfw)) return 1;
     if (!createInstance(&vulkan, &instance)) {
-	success = false;
+	result = false;
 	goto clean;
     };
     if (!pickPhysicalDevice(&vulkan, &physicalDevice)) {
-	success = false;
+	result = false;
 	goto clean;
     }
     if (!createLogicalDevice(&vulkan, &logicalDevice, &physicalDevice)) {
-	success = false;
+	result = false;
 	goto clean;
     }
     if (!createSwapChain(&vulkan, &physicalDevice, &swapChain, &glfw)) {
-	success = false;
+	result = false;
 	goto clean;
     }
     if (!createPipeline(&vulkan, &pipeline, argv[1])) {
-	success = false;
+	result = false;
+	goto clean;
+    }
+    if (!createVertexBuffer(&vulkan)) {
+	result = false;
 	goto clean;
     }
     
@@ -104,5 +110,5 @@ int main(int argc, const char **argv)
 
     glfwDestroyWindow(glfw.window);
     glfwTerminate();
-    return success ? 0 : 1;
+    return result ? 0 : 1;
 }
