@@ -120,6 +120,10 @@ bool createPipeline(Vulkan *vulkan, Pipeline *pipeline, const char *fname);
 	    .dynamicStateCount = sizeof(dynamicStates) / sizeof(*dynamicStates),
 	    .pDynamicStates = dynamicStates
 	};
+	
+
+
+	
 	vulkan->result = VK_SUCCESS;
 	
  clean:

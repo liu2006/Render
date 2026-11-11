@@ -18,7 +18,6 @@ bool createVertexBuffer(Vulkan *vulkan);
 	    { .position = { 0.5f, 0.5f }, .color = { 0.0f, 0.0f, 1.0f} },
 	    { .position = { -0.5f, 0.5f }, .color = { 0.3f, 0.7f, 0.5f} },
 	};
-	uint32_t vertCount = (uint32_t)sizeof(vertices) / sizeof(*vertices);
 
 	VkBuffer stagingBuffer;
 	VkDeviceMemory stagingBufferMemory;
@@ -69,6 +68,15 @@ bool createVertexBuffer(Vulkan *vulkan);
 	    logMessage(LOG_ERROR, "Failed to bind memory for staging buffer\n");
 	    goto clean;
 	}
+	
+	void *data;
+	vulkan->result = vkMapMemory(vulkan->device, stagingBufferMemory, 0, memoryRequirements.size, 0, &data);
+	if (vulkan->result != VK_SUCCESS) {
+	    logMessage(LOG_ERROR, "Failed to map stagging buffer memory\n");
+	}
+	memcpy(data, vertices, stagingBufferInfo.size);
+	
+	vkUnmapMemory(vulkan->device, stagingBufferMemory);
 	
 	vulkan->result = VK_SUCCESS;
  clean:
