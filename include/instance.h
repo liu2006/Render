@@ -19,7 +19,7 @@ typedef struct {
 
 typedef struct {
     Instance *instance;
-    VkResult tResult;
+    VkResult taskRes;
 } LayerTask;
 
 bool createInstance(Vulkan *vulkan, Instance *instance);
@@ -29,7 +29,7 @@ bool createInstance(Vulkan *vulkan, Instance *instance);
     {
 	LayerTask *layerTask = (LayerTask *)arg;
 	Instance *instance = layerTask->instance;
-	VkResult lResult = layerTask->tResult;
+	VkResult localRes = layerTask->taskRes;
 
 	uint32_t layerPropertyCount;
 	VkLayerProperties *layerProperties = NULL;
@@ -40,15 +40,15 @@ bool createInstance(Vulkan *vulkan, Instance *instance);
 	for (uint32_t i = 0; i < instance->layerCount; ++i) {
 	    instance->layers[i] = strdup(requiredLayers[i]);
 	}
-	lResult = vkEnumerateInstanceLayerProperties(&layerPropertyCount, NULL);
-	if (lResult != VK_SUCCESS) {
-	    logMessage(LOG_ERROR, "Failed to enumerate instance layer properties [%d]\n", lResult);
+	localRes = vkEnumerateInstanceLayerProperties(&layerPropertyCount, NULL);
+	if (localRes != VK_SUCCESS) {
+	    logMessage(LOG_ERROR, "Failed to enumerate instance layer properties [%d]\n", localRes);
 	    goto clean;
 	}
 	layerProperties = malloc(sizeof(*layerProperties) * layerPropertyCount);
-	lResult = vkEnumerateInstanceLayerProperties(&layerPropertyCount, layerProperties);
-	if (lResult != VK_SUCCESS) {
-	    logMessage(LOG_ERROR, "Failed to enumerate instance layer properties [%d]\n", lResult);
+	localRes = vkEnumerateInstanceLayerProperties(&layerPropertyCount, layerProperties);
+	if (localRes != VK_SUCCESS) {
+	    logMessage(LOG_ERROR, "Failed to enumerate instance layer properties [%d]\n", localRes);
 	    goto clean;
 	}
 	for (uint32_t i = 0; i < layerPropertyCount; ++i) {
@@ -66,7 +66,7 @@ bool createInstance(Vulkan *vulkan, Instance *instance);
 	    }
 	    if (!found) {
 		logMessage(LOG_ERROR, "Required layer is not supported: [%s]\n", instance->layers[i]);
-		lResult = VK_ERROR_LAYER_NOT_PRESENT;
+		localRes = VK_ERROR_LAYER_NOT_PRESENT;
 		goto clean;
 	    }
 	}
@@ -78,7 +78,7 @@ bool createInstance(Vulkan *vulkan, Instance *instance);
 	(void)layerProperties;
 	logMessage(LOG_INFO, "Layer not enabled\n");    
 #endif
-	layerTask->tResult = lResult;
+	layerTask->taskRes = localRes;
 	return NULL;
     }
 
@@ -89,7 +89,7 @@ bool createInstance(Vulkan *vulkan, Instance *instance);
     
 	LayerTask layerTask = {
 	    .instance = instance,
-	    .tResult = VK_SUCCESS
+	    .taskRes = VK_SUCCESS
 	};
 	pthread_t layerThread; 
 	bool joined = false;
@@ -98,6 +98,7 @@ bool createInstance(Vulkan *vulkan, Instance *instance);
 	    logMessage(LOG_ERROR, "Failed to create layer thread\n");
 	    goto clean; 
 	}
+	
 	instance->extensions = glfwGetRequiredInstanceExtensions(&instance->extensionCount);
 	vulkan->result = vkEnumerateInstanceExtensionProperties(NULL, &extensionPropertyCount, NULL);
 	if (vulkan->result != VK_SUCCESS) {
@@ -138,10 +139,15 @@ bool createInstance(Vulkan *vulkan, Instance *instance);
 	    .engineVersion = VK_MAKE_VERSION(1, 0, 0),
 	    .apiVersion = VK_API_VERSION_1_4
 	};
-	pthread_join(layerThread, NULL);
+	
+	if ((pthread_join(layerThread, NULL)) != 0) {
+	    logMessage(LOG_ERROR, "Failed to join layer thread\n");	
+	    goto clean;
+	}
 	joined = true;
-	if (layerTask.tResult != VK_SUCCESS) {
-	    logMessage(LOG_ERROR, "Failed to enable layer [%d]\n", layerTask.tResult);	
+	
+	if (layerTask.taskRes != VK_SUCCESS) {
+	    logMessage(LOG_ERROR, "Failed to enable layer [%d]\n", layerTask.taskRes);	
 	    goto clean;
 	}
 	const VkInstanceCreateInfo instanceInfo = {

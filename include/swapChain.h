@@ -1,7 +1,6 @@
 #ifndef SWAPCHAIN_H
 #define SWAPCHAIN_H
 #include "vulkan.h"
-#include "glfw.h"
 
 typedef struct {
     VkExtent2D surfaceExtent;
@@ -16,9 +15,72 @@ typedef struct {
     VkPresentModeKHR *presentModes;
 } SwapChain;
 
+typedef struct {
+    Vulkan *vulkan;
+    SwapChain *swapChain;
+    VkResult taskRes;
+} SurfaceTask;
+
 bool createSwapChain(Vulkan *vulkan, PhysicalDevice *physicalDevice, SwapChain *swapChain, Glfw *glfw);
 
 #if defined(SWAPCHAIN_IMPLEMENTATION)
+
+    void *pickSurfaceProperties(void *arg)
+    {
+	SurfaceTask *surfaceTask = (SurfaceTask *)arg;
+	Vulkan *vulkan = surfaceTask->vulkan;
+	VkResult localRes = surfaceTask->taskRes;
+	SwapChain *swapChain = surfaceTask->swapChain;
+	localRes = vkGetPhysicalDeviceSurfaceFormatsKHR(vulkan->physicalDevice, 
+							vulkan->surface, &swapChain->formatCount, NULL);
+	if (localRes != VK_SUCCESS) {
+	    logMessage(LOG_ERROR, "Failed to get surface formats [%d]\n", localRes);
+	    goto clean;
+	} 
+	swapChain->formats = malloc(sizeof(*swapChain->formats) * swapChain->formatCount);
+	localRes = vkGetPhysicalDeviceSurfaceFormatsKHR(vulkan->physicalDevice, 
+							vulkan->surface, &swapChain->formatCount, 
+							swapChain->formats);
+	if (localRes != VK_SUCCESS) {
+	    logMessage(LOG_ERROR, "Failed to get surface formats [%d]\n", localRes);
+	    goto clean;
+	}
+	for (uint32_t i = 0; i < swapChain->formatCount; ++i) {
+	    if (swapChain->formats[i].format == VK_FORMAT_B8G8R8A8_SRGB &&
+		swapChain->formats[i].colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
+		swapChain->formatIndex = i;
+		break;
+	    }
+	}
+	localRes = vkGetPhysicalDeviceSurfacePresentModesKHR(vulkan->physicalDevice, 
+							     vulkan->surface, 
+							     &swapChain->presentModeCount,
+							     NULL);
+	if (localRes != VK_SUCCESS) {
+	    logMessage(LOG_ERROR, "Failed to get surface present modes [%d]\n", localRes);
+	    goto clean;
+	}     
+	swapChain->presentModes = malloc(sizeof(*swapChain->presentModes) * swapChain->presentModeCount);
+	localRes = vkGetPhysicalDeviceSurfacePresentModesKHR(vulkan->physicalDevice, 
+							     vulkan->surface, 
+							     &swapChain->presentModeCount,
+							     swapChain->presentModes);
+	if (localRes != VK_SUCCESS) {
+	    logMessage(LOG_ERROR, "Failed to get surface present modes [%d]\n", localRes);
+	    goto clean;
+	}     
+	for (uint32_t i = 0; i < swapChain->presentModeCount; ++i) {
+	    if (swapChain->presentModes[i] == VK_PRESENT_MODE_FIFO_KHR) {
+		swapChain->presentModeIndex = i;
+		break;
+	    } 
+	}
+	
+ clean:
+	surfaceTask->taskRes = localRes;
+	return NULL;
+    }
+    
     bool createSwapChain(Vulkan *vulkan, PhysicalDevice *physicalDevice, SwapChain *swapChain, Glfw *glfw) 
     {
 	vulkan->result = glfwCreateWindowSurface(vulkan->instance, glfw->window, NULL, &vulkan->surface);
@@ -26,10 +88,22 @@ bool createSwapChain(Vulkan *vulkan, PhysicalDevice *physicalDevice, SwapChain *
 	    logMessage(LOG_ERROR, "Failed to create window surface [%d]\n", vulkan->result);
 	    goto clean;
 	}
+	SurfaceTask surfaceTask = {
+	    .vulkan = vulkan,
+	    .swapChain = swapChain,
+	    .taskRes = VK_SUCCESS
+	};
+	pthread_t surfaceThread;
+	bool joined = false;
+	if ((pthread_create(&surfaceThread, NULL, pickSurfaceProperties, &surfaceTask) != 0)) {
+	    logMessage(LOG_ERROR, "Failed to create surface thread\n");
+	    goto clean;
+	}
+	
 	VkSurfaceCapabilitiesKHR surfaceCapabilities;
 	vulkan->result = vkGetPhysicalDeviceSurfaceCapabilitiesKHR(vulkan->physicalDevice, 
-								   vulkan->surface, 
-								   &surfaceCapabilities);
+							     vulkan->surface, 
+							     &surfaceCapabilities);
 	if (vulkan->result != VK_SUCCESS) {
 	    logMessage(LOG_ERROR, "Failed to get surface capabilities [%d]\n", vulkan->result);
 	    goto clean;
@@ -46,50 +120,17 @@ bool createSwapChain(Vulkan *vulkan, PhysicalDevice *physicalDevice, SwapChain *
 	    swapChain->imageCount = surfaceCapabilities.minImageCount;
 	}
 	
- 	vulkan->result = vkGetPhysicalDeviceSurfaceFormatsKHR(vulkan->physicalDevice, 
-							      vulkan->surface, &swapChain->formatCount, NULL);
-	if (vulkan->result != VK_SUCCESS) {
-	    logMessage(LOG_ERROR, "Failed to get surface formats [%d]\n", vulkan->result);
+	if ((pthread_join(surfaceThread, NULL)) != 0) {
+	    logMessage(LOG_ERROR, "Failed to join surface thread\n");
 	    goto clean;
-	} 
-	swapChain->formats = malloc(sizeof(*swapChain->formats) * swapChain->formatCount);
-	vulkan->result = vkGetPhysicalDeviceSurfaceFormatsKHR(vulkan->physicalDevice, 
-							      vulkan->surface, &swapChain->formatCount, 
-							      swapChain->formats);
-	if (vulkan->result != VK_SUCCESS) {
-	    logMessage(LOG_ERROR, "Failed to get surface formats [%d]\n", vulkan->result);
-	    goto clean;
-	} 
-	vulkan->result = vkGetPhysicalDeviceSurfacePresentModesKHR(vulkan->physicalDevice, 
-								   vulkan->surface, 
-								   &swapChain->presentModeCount,
-								   NULL);
-	if (vulkan->result != VK_SUCCESS) {
-	    logMessage(LOG_ERROR, "Failed to get surface present modes [%d]\n", vulkan->result);
-	    goto clean;
-	}     
-	swapChain->presentModes = malloc(sizeof(*swapChain->presentModes) * swapChain->presentModeCount);
-	vulkan->result = vkGetPhysicalDeviceSurfacePresentModesKHR(vulkan->physicalDevice, 
-								   vulkan->surface, 
-								   &swapChain->presentModeCount,
-								   swapChain->presentModes);
-	if (vulkan->result != VK_SUCCESS) {
-	    logMessage(LOG_ERROR, "Failed to get surface present modes [%d]\n", vulkan->result);
-	    goto clean;
-	}     
-	for (uint32_t i = 0; i < swapChain->formatCount; ++i) {
-	    if (swapChain->formats[i].format == VK_FORMAT_B8G8R8A8_SRGB &&
-		swapChain->formats[i].colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
-		swapChain->formatIndex = i;
-		break;
-	    }
 	}
-	for (uint32_t i = 0; i < swapChain->presentModeCount; ++i) {
-	    if (swapChain->presentModes[i] == VK_PRESENT_MODE_FIFO_KHR) {
-		swapChain->presentModeIndex = i;
-		break;
-	    } 
+	joined = true;
+	
+	if (surfaceTask.taskRes != VK_SUCCESS) {
+	    logMessage(LOG_ERROR, "Failed to pick surface properties [%d]\n", surfaceTask.taskRes);
+	    goto clean;
 	}
+	
 	const VkSwapchainCreateInfoKHR swapChainInfo = {
 	    .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
 	    .pNext = NULL,
@@ -244,6 +285,7 @@ bool createSwapChain(Vulkan *vulkan, PhysicalDevice *physicalDevice, SwapChain *
 	vulkan->result = VK_SUCCESS;
     
  clean:
+	if (!joined) pthread_join(surfaceThread, NULL);
 	free(swapChain->presentModes);
 	free(swapChain->formats);
 	return (vulkan->result != VK_SUCCESS) ? false : true;

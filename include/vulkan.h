@@ -16,8 +16,8 @@
 #define HEIGHT 1080
 #define RATE 165
 
-static const char *requiredLayers[] = { "VK_LAYER_KHRONOS_validation" };
-static const char *requiredDeviceExtensions[] = { "VK_KHR_swapchain" };
+extern const char *requiredLayers[];
+extern const char *requiredDeviceExtensions[];
 
 typedef struct {
     VkResult result;
@@ -47,6 +47,9 @@ typedef enum {
 void logMessage(LogLevel level, const char *format, ...);
 
 #if defined(VULKAN_IMPLEMENTATION)
+    const char *requiredLayers[] = { "VK_LAYER_KHRONOS_validation" };
+    const char *requiredDeviceExtensions[] = { "VK_KHR_swapchain" };
+
     void logMessage(LogLevel level, const char *format, ...)
     {
 	FILE *stream;

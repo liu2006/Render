@@ -2,7 +2,6 @@
 #define LOGICAL_DEVICE_H
 
 #include "vulkan.h"
-#include "physicalDevice.h"
 
 typedef struct {
     void *ptr; 
