@@ -33,6 +33,7 @@ bool createInstance(Vulkan *vulkan, Instance *instance);
 
 	uint32_t layerPropertyCount;
 	VkLayerProperties *layerProperties = NULL;
+	
 #if ENABLE_VALIDATION
 	instance->layerCount = sizeof(requiredLayers) / sizeof(requiredLayers[0]);
 	instance->layers = malloc(sizeof(*instance->layers) * instance->layerCount);

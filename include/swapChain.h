@@ -41,10 +41,12 @@ bool createSwapChain(Vulkan *vulkan, PhysicalDevice *physicalDevice, SwapChain *
 	if (surfaceCapabilities.currentExtent.width != UINT32_MAX) {
 	    swapChain->surfaceExtent = surfaceCapabilities.currentExtent;
 	}
-	if (surfaceCapabilities.minImageCount >= 2) {
-	    swapChain->imageCount = 2;
+	swapChain->imageCount = 2;
+	if (swapChain->imageCount < surfaceCapabilities.minImageCount) {
+	    swapChain->imageCount = surfaceCapabilities.minImageCount;
 	}
-	vulkan->result = vkGetPhysicalDeviceSurfaceFormatsKHR(vulkan->physicalDevice, 
+	
+ 	vulkan->result = vkGetPhysicalDeviceSurfaceFormatsKHR(vulkan->physicalDevice, 
 							      vulkan->surface, &swapChain->formatCount, NULL);
 	if (vulkan->result != VK_SUCCESS) {
 	    logMessage(LOG_ERROR, "Failed to get surface formats [%d]\n", vulkan->result);

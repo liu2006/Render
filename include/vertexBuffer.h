@@ -19,8 +19,8 @@ bool createVertexBuffer(Vulkan *vulkan);
 	    { .position = { -0.5f, 0.5f }, .color = { 0.3f, 0.7f, 0.5f} },
 	};
 
-	VkBuffer stagingBuffer;
-	VkDeviceMemory stagingBufferMemory;
+	VkBuffer stagingBuffer = VK_NULL_HANDLE;
+	VkDeviceMemory stagingBufferMemory = VK_NULL_HANDLE;
 	const VkBufferCreateInfo stagingBufferInfo = {
 	    .sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO,
 	    .pNext = NULL,
@@ -31,6 +31,12 @@ bool createVertexBuffer(Vulkan *vulkan);
 	    .queueFamilyIndexCount = 0,
 	    .pQueueFamilyIndices = NULL
 	};
+	vulkan->result = vkCreateBuffer(vulkan->device, &stagingBufferInfo, NULL, &stagingBuffer);
+	if (vulkan->result != VK_SUCCESS) {
+	    logMessage(LOG_ERROR, "Failed to create staging buffer\n");
+	    goto clean;
+	} 
+	
 	VkMemoryRequirements memoryRequirements;
 	vkGetBufferMemoryRequirements(vulkan->device, stagingBuffer, &memoryRequirements);
 
@@ -80,6 +86,10 @@ bool createVertexBuffer(Vulkan *vulkan);
 	
 	vulkan->result = VK_SUCCESS;
  clean:
+	if (stagingBuffer != VK_NULL_HANDLE) {
+	    vkDestroyBuffer(vulkan->device, stagingBuffer, NULL);
+	}
+	vkFreeMemory(vulkan->device, stagingBufferMemory, NULL);
 	return (vulkan->result != VK_SUCCESS) ? false : true;
     }
 
