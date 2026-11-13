@@ -19,7 +19,7 @@ all: $(TARGET)
 -include $(OBJS:.o=.d)
 
 $(TARGET) : $(OBJS) | $(BUIDIR)
-	$(CC) $(CFLAGS) $(CPPFLAGS) -o $@ $^ $(LDFLAGS) $(LDLIBS)
+	$(CC) -o $@ $^ $(LDFLAGS) $(LDLIBS)
 
 $(OBJDIR)/%.o : $(SRCDIR)/%.c | $(OBJDIR)
 	$(COMPILE.c) $(OUTPUT_OPTION) $<
