@@ -1,10 +1,6 @@
 #ifndef PHYSICAL_DEVICE_H
 #define PHYSICAL_DEVICE_H
 
-#include "renderer.h" 
-#include "config.h"
-
-
 #if defined(PHYSICAL_DEVICE_IMPLEMENTATION)
     void *findQueueFamily(void *arg) 
     {

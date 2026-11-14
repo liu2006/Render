@@ -1,9 +1,6 @@
 #ifndef VERTEX_BUFFER_H
 #define VERTEX_BUFFER_H
 
-#include "renderer.h"
-#include "config.h"
-
 #if defined(VERTEX_BUFFER_IMPLEMENTATION)
     bool createVertexBuffer(Renderer *renderer)
     {

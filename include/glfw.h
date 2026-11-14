@@ -1,8 +1,6 @@
 #ifndef GLFW_H
 #define GLFW_H
-
-#include "renderer.h"
-#include "config.h"
+#include "common.h"
 
 #if defined(GLFW_IMPLEMENTATION) 
     bool createWindow(Renderer *renderer)

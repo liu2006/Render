@@ -1,9 +1,6 @@
 #ifndef LOGICAL_DEVICE_H
 #define LOGICAL_DEVICE_H
 
-#include "renderer.h"
-#include "config.h"
-
 #if defined(LOGICAL_DEVICE_IMPLEMENTATION)
     int createLogicalDevice(Renderer *renderer)
     {

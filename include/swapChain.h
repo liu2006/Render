@@ -1,8 +1,6 @@
 #ifndef SWAPCHAIN_H
 #define SWAPCHAIN_H
 
-#include "renderer.h"
-#include "config.h"
 #if defined(SWAPCHAIN_IMPLEMENTATION)
 
     void *pickSurfaceProperties(void *arg)

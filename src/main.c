@@ -1,3 +1,5 @@
+#include "common.h"
+
 #define VULKAN_IMPLEMENTATION
 #define GLFW_IMPLEMENTATION
 #define INSTANCE_IMPLEMENTATION
@@ -7,15 +9,6 @@
 #define PIPELINE_IMPLEMENTATION
 #define CONFIG_IMPLEMENTATION
 #define VERTEX_BUFFER_IMPLEMENTATION
-
-#include "vulkan.h"
-#include "glfw.h"
-#include "instance.h"
-#include "physicalDevice.h"
-#include "logicalDevice.h"
-#include "swapChain.h"
-#include "pipeline.h"
-#include "vertexBuffer.h"
 
 int main(int argc, const char **argv)
 {

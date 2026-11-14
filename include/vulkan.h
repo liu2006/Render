@@ -1,9 +1,20 @@
 #ifndef VULKAN_H
 #define VULKAN_H
 
-#include "renderer.h"
+extern const int width;
+extern const int height;
+extern const int rate;
+extern const char *requiredLayers[];
+extern const char *requiredDeviceExtensions[];
 
 #if defined(VULKAN_IMPLEMENTATION)
+    const int width = 1920;
+    const int height = 1080;
+    const int rate = 240;
+    
+    const char *requiredLayers[] = { "VK_LAYER_KHRONOS_validation" };
+    const char *requiredDeviceExtensions[] = { "VK_KHR_swapchain" };
+
     bool run(int argc, const char **argv, Renderer *renderer) {
 	if (argc < 2) {
             logMessage(LOG_ERROR, "Usage: %s <shader-file>\n", argv[0]);

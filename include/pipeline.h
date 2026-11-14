@@ -1,9 +1,6 @@
 #ifndef PIPELINE_H
 #define PIPELINE_H
 
-#include "renderer.h"
-#include "config.h"
-
 #if defined(PIPELINE_IMPLEMENTATION)
     bool createPipeline(Renderer *renderer, const char *fname) 
     {	

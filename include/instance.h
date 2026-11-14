@@ -1,14 +1,7 @@
 #ifndef INSTANCE_H
 #define INSTANCE_H
 
-#include "renderer.h"
-#include "config.h"
-
-#ifdef NDEBUG
-#define ENABLE_VALIDATION 0
-#else 
-#define ENABLE_VALIDATION 1
-#endif
+#include "vulkan.h"
 
 #if defined(INSTANCE_IMPLEMENTATION)
     void *enableLayers(void *arg)
