@@ -1,5 +1,3 @@
-#include "common.h"
-
 #define VULKAN_IMPLEMENTATION
 #define GLFW_IMPLEMENTATION
 #define INSTANCE_IMPLEMENTATION
@@ -9,6 +7,8 @@
 #define PIPELINE_IMPLEMENTATION
 #define CONFIG_IMPLEMENTATION
 #define VERTEX_BUFFER_IMPLEMENTATION
+
+#include "common.h"
 
 int main(int argc, const char **argv)
 {
