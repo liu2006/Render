@@ -1,7 +1,8 @@
 CC := gcc
 CFLAGS := -Wall -Wextra -g -O0 -MMD -MP 
 CPPFLAGS := -Iinclude -Ivendor/glfw/include -Ivendor/vulkan/x86_64/include
-LDFLAGS := -Lvendor/glfw/lib64 -Lvendor/vulkan/x86_64/lib/VulkanLoader/lib
+LDFLAGS := -Lvendor/vulkan/x86_64/lib/VulkanLoader/lib -Lvendor/glfw/lib64 
+LDFLAGS += -Wl,-rpath,'$$ORIGIN/../vendor/glfw/lib64'
 LDLIBS := -lglfw3 -lvulkan -lm	
 
 BUIDIR := build

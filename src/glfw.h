@@ -1,28 +1,22 @@
 #ifndef GLFW_H
 #define GLFW_H
 
-#include "vulkan.h"
-
-typedef struct {
-    GLFWwindow *window;
-    int width;
-    int height;
-    int rate;
-} Glfw;
-
-bool createWindow(Glfw *glfw);
-void errorCallback(int errorCode, const char *description);
-void keyCallback(GLFWwindow *window, int key, int scancode, int action, int mods);
+#include "renderer.h"
+#include "config.h"
 
 #if defined(GLFW_IMPLEMENTATION) 
-    bool createWindow(Glfw *glfw)
+    bool createWindow(Renderer *renderer)
     {
+	Glfw *glfw = renderer->glfw;
+
 	glfwSetErrorCallback(errorCallback);
 	if (!glfwInit()) {
 	    logMessage(LOG_ERROR, "Failed to initialize GLFW\n");
 	    return false;
 	}
+	glfw->initialized = true;
 	logMessage(LOG_INFO, "GLFW initialized\n");
+	
 	glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 	glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);
 	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);

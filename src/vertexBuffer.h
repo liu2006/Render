@@ -1,17 +1,14 @@
 #ifndef VERTEX_BUFFER_H
 #define VERTEX_BUFFER_H
-#include "vulkan.h"
 
-typedef struct {
-    float position[2];
-    float color[3];
-} Vertex;
-
-bool createVertexBuffer(Vulkan *vulkan);
+#include "renderer.h"
+#include "config.h"
 
 #if defined(VERTEX_BUFFER_IMPLEMENTATION)
-    bool createVertexBuffer(Vulkan *vulkan)
+    bool createVertexBuffer(Renderer *renderer)
     {
+	Vulkan *vulkan = renderer->vulkan;
+
 	Vertex vertices[] = {
 	    { .position = { -0.5f, -0.5f }, .color = { 1.0f, 0.0f, 0.0f} },
 	    { .position = { 0.5f, -0.5f }, .color = { 0.0f, 1.0f, 0.0f} },

@@ -1,18 +1,15 @@
 #ifndef PIPELINE_H
 #define PIPELINE_H
 
-#include "vulkan.h"
-#include "vertexBuffer.h"
-typedef struct {
-    size_t spirvSize;
-    uint32_t *spirvBuffer;
-} Pipeline;
-
-bool createPipeline(Vulkan *vulkan, Pipeline *pipeline, const char *fname);
+#include "renderer.h"
+#include "config.h"
 
 #if defined(PIPELINE_IMPLEMENTATION)
-    bool createPipeline(Vulkan *vulkan, Pipeline *pipeline, const char *fname) 
-    {
+    bool createPipeline(Renderer *renderer, const char *fname) 
+    {	
+	Vulkan *vulkan = renderer->vulkan;
+	Pipeline *pipeline = renderer->pipeline;
+	
 	FILE *shaderFile;
 	shaderFile = fopen(fname, "rb");
 	if (!shaderFile) {

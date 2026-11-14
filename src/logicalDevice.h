@@ -1,18 +1,15 @@
 #ifndef LOGICAL_DEVICE_H
 #define LOGICAL_DEVICE_H
 
-#include "vulkan.h"
-
-typedef struct {
-    void *ptr; 
-} LogicalDevice;
-
-bool createLogicalDevice(Vulkan *vulkan, LogicalDevice *logicalDevice, PhysicalDevice *physicalDevice);
+#include "renderer.h"
+#include "config.h"
 
 #if defined(LOGICAL_DEVICE_IMPLEMENTATION)
-    bool createLogicalDevice(Vulkan *vulkan, LogicalDevice *logicalDevice, PhysicalDevice *physicalDevice)
+    int createLogicalDevice(Renderer *renderer)
     {
-	(void)logicalDevice;
+	Vulkan *vulkan = renderer->vulkan;
+	PhysicalDevice *physicalDevice = renderer->physicalDevice;
+
 	float queuePriority = 1.0f;
 	const VkDeviceQueueCreateInfo queueInfo = {
 	    .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO, 
@@ -58,12 +55,13 @@ bool createLogicalDevice(Vulkan *vulkan, LogicalDevice *logicalDevice, PhysicalD
 	vulkan->result = vkCreateDevice(vulkan->physicalDevice, &deviceInfo, NULL, &vulkan->device);
 	if (vulkan->result != VK_SUCCESS) {
 	    logMessage(LOG_ERROR, "Failed to create logical device [%]\n", vulkan->result);
-	    return false;
+	    goto clean;
 	}
 	logMessage(LOG_INFO, "Logical device created\n");
 	vkGetDeviceQueue(vulkan->device, physicalDevice->graphicsIndex, 0, &vulkan->graphicsQueue);
 	vulkan->result = VK_SUCCESS;
-	return (vulkan->result != VK_SUCCESS) ? false : true;
+ clean:
+	return vulkan->result;
     }
 #endif
     

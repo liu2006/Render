@@ -1,28 +1,8 @@
 #ifndef SWAPCHAIN_H
 #define SWAPCHAIN_H
-#include "vulkan.h"
 
-typedef struct {
-    VkExtent2D surfaceExtent;
-    uint32_t imageCount;
-
-    uint32_t formatCount;
-    uint32_t formatIndex;
-    VkSurfaceFormatKHR *formats;
-    
-    uint32_t presentModeCount;
-    uint32_t presentModeIndex;
-    VkPresentModeKHR *presentModes;
-} SwapChain;
-
-typedef struct {
-    Vulkan *vulkan;
-    SwapChain *swapChain;
-    VkResult taskRes;
-} SurfaceTask;
-
-bool createSwapChain(Vulkan *vulkan, PhysicalDevice *physicalDevice, SwapChain *swapChain, Glfw *glfw);
-
+#include "renderer.h"
+#include "config.h"
 #if defined(SWAPCHAIN_IMPLEMENTATION)
 
     void *pickSurfaceProperties(void *arg)
@@ -81,8 +61,13 @@ bool createSwapChain(Vulkan *vulkan, PhysicalDevice *physicalDevice, SwapChain *
 	return NULL;
     }
     
-    bool createSwapChain(Vulkan *vulkan, PhysicalDevice *physicalDevice, SwapChain *swapChain, Glfw *glfw) 
+    bool createSwapChain(Renderer *renderer) 
     {
+	Glfw *glfw = renderer->glfw;
+	Vulkan *vulkan = renderer->vulkan;
+	PhysicalDevice *physicalDevice = renderer->physicalDevice;
+	SwapChain *swapChain = renderer->swapChain;
+
 	vulkan->result = glfwCreateWindowSurface(vulkan->instance, glfw->window, NULL, &vulkan->surface);
 	if (vulkan->result != VK_SUCCESS) {
 	    logMessage(LOG_ERROR, "Failed to create window surface [%d]\n", vulkan->result);

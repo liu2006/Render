@@ -1,28 +1,14 @@
 #ifndef INSTANCE_H
 #define INSTANCE_H
 
-#include "vulkan.h"
+#include "renderer.h"
+#include "config.h"
 
 #ifdef NDEBUG
 #define ENABLE_VALIDATION 0
 #else 
 #define ENABLE_VALIDATION 1
 #endif
-
-typedef struct {
-    uint32_t extensionCount;
-    const char **extensions;
-
-    uint32_t layerCount;
-    const char **layers;
-} Instance;
-
-typedef struct {
-    Instance *instance;
-    VkResult taskRes;
-} LayerTask;
-
-bool createInstance(Vulkan *vulkan, Instance *instance);
 
 #if defined(INSTANCE_IMPLEMENTATION)
     void *enableLayers(void *arg)
@@ -82,8 +68,11 @@ bool createInstance(Vulkan *vulkan, Instance *instance);
 	return NULL;
     }
 
-    bool createInstance(Vulkan *vulkan, Instance *instance)
+    int createInstance(Renderer *renderer)
     {
+	Vulkan *vulkan = renderer->vulkan;
+	Instance *instance = renderer->instance;
+
 	uint32_t extensionPropertyCount;
 	VkExtensionProperties *extensionProperties = NULL;
     
@@ -96,6 +85,7 @@ bool createInstance(Vulkan *vulkan, Instance *instance);
     
 	if (pthread_create(&layerThread, NULL, enableLayers, &layerTask) != 0) {
 	    logMessage(LOG_ERROR, "Failed to create layer thread\n");
+	    vulkan->result = VK_ERROR_INITIALIZATION_FAILED; 
 	    goto clean; 
 	}
 	
@@ -141,13 +131,15 @@ bool createInstance(Vulkan *vulkan, Instance *instance);
 	};
 	
 	if ((pthread_join(layerThread, NULL)) != 0) {
-	    logMessage(LOG_ERROR, "Failed to join layer thread\n");	
+	    logMessage(LOG_ERROR, "Failed to join layer thread\n");
+	    vulkan->result = VK_ERROR_EXTENSION_NOT_PRESENT;
 	    goto clean;
 	}
 	joined = true;
 	
 	if (layerTask.taskRes != VK_SUCCESS) {
-	    logMessage(LOG_ERROR, "Failed to enable layer [%d]\n", layerTask.taskRes);	
+	    logMessage(LOG_ERROR, "Failed to enable layer [%d]\n", layerTask.taskRes);
+	    vulkan->result = layerTask.taskRes;
 	    goto clean;
 	}
 	const VkInstanceCreateInfo instanceInfo = {
@@ -171,7 +163,7 @@ bool createInstance(Vulkan *vulkan, Instance *instance);
  clean:
 	if (!joined) pthread_join(layerThread, NULL);
 	free(extensionProperties);
-	return (vulkan->result != VK_SUCCESS) ? false : true;
+	return vulkan->result;
     }
 #endif
 

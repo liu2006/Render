@@ -1,24 +1,9 @@
 #ifndef PHYSICAL_DEVICE_H
 #define PHYSICAL_DEVICE_H
 
-#include "vulkan.h" 
+#include "renderer.h" 
+#include "config.h"
 
-typedef struct {
-    uint32_t graphicsIndex;
-
-    uint32_t deviceExtensionCount;
-    const char **deviceExtensions;
-
-    VkSampleCountFlagBits msaaSamples;
-} PhysicalDevice;
-
-typedef struct {
-    VkResult tResult;
-    Vulkan *vulkan;
-    PhysicalDevice *physicalDevice;
-} QueueTask;
-
-bool pickPhysicalDevice(Vulkan *vulkan, PhysicalDevice *physicalDevice); 
 
 #if defined(PHYSICAL_DEVICE_IMPLEMENTATION)
     void *findQueueFamily(void *arg) 
@@ -26,7 +11,7 @@ bool pickPhysicalDevice(Vulkan *vulkan, PhysicalDevice *physicalDevice);
 	QueueTask *queueTask = (QueueTask *)arg;
 	Vulkan *vulkan = queueTask->vulkan;
 	PhysicalDevice *physicalDevice = queueTask->physicalDevice;
-	VkResult lResult = queueTask->tResult; 
+	VkResult localRes = queueTask->taskRes; 
 
 	uint32_t queueFamilyPropertyCount;
 	VkQueueFamilyProperties *queueFamilyProperties = NULL;
@@ -43,19 +28,22 @@ bool pickPhysicalDevice(Vulkan *vulkan, PhysicalDevice *physicalDevice);
 	    }
 	}
 	if (!supportGraphics) {
-	    lResult = VK_ERROR_INITIALIZATION_FAILED;
+	    localRes = VK_ERROR_INITIALIZATION_FAILED;
 	    logMessage(LOG_ERROR, "Graphics queue not supported\n");
 	    goto clean;
 	}
 	
  clean:
 	free(queueFamilyProperties);    
-	queueTask->tResult = lResult; 
+	queueTask->taskRes = localRes; 
 	return NULL;
     }
 
-    bool pickPhysicalDevice(Vulkan *vulkan, PhysicalDevice *physicalDevice) 
+    int pickPhysicalDevice(Renderer *renderer) 
     {
+	Vulkan *vulkan = renderer->vulkan;
+	PhysicalDevice *physicalDevice = renderer->physicalDevice;
+
 	uint32_t physicalDeviceCount;
 	VkPhysicalDevice *physicalDevices = NULL;    
 
@@ -98,9 +86,13 @@ bool pickPhysicalDevice(Vulkan *vulkan, PhysicalDevice *physicalDevice);
 	QueueTask queueTask = {
 	    .vulkan = vulkan,
 	    .physicalDevice = physicalDevice,
-	    .tResult = VK_SUCCESS
+	    .taskRes = VK_SUCCESS
 	};
-	pthread_create(&queueThread, NULL, findQueueFamily, &queueTask);
+	if (pthread_create(&queueThread, NULL, findQueueFamily, &queueTask) != 0) {
+	    logMessage(LOG_ERROR, "Failed to create queue thread\n");
+	    vulkan->result = VK_ERROR_INITIALIZATION_FAILED;
+	    goto clean;
+	}
 
 	const VkSampleCountFlagBits sampleCounts[] = {
 	    VK_SAMPLE_COUNT_64_BIT,
@@ -156,12 +148,14 @@ bool pickPhysicalDevice(Vulkan *vulkan, PhysicalDevice *physicalDevice);
 	    }
 	}
 	if ((pthread_join(queueThread, NULL)) != 0) {
-	    logMessage(LOG_ERROR, "Failed to join queue thread\n");	
+	    logMessage(LOG_ERROR, "Failed to join queue thread\n");
+	    vulkan->result = VK_ERROR_INITIALIZATION_FAILED; 
 	    goto clean;
 	}
 	joined = true;
-	if (queueTask.tResult != VK_SUCCESS) {
+	if (queueTask.taskRes != VK_SUCCESS) {
 	    logMessage(LOG_ERROR, "Graphics queue not supported\n");
+	    vulkan->result = queueTask.taskRes;
 	    goto clean;
 	}
 	vulkan->result = VK_SUCCESS;
@@ -170,7 +164,7 @@ bool pickPhysicalDevice(Vulkan *vulkan, PhysicalDevice *physicalDevice);
 	free(extensionProperties);
 	free(physicalDevices);
     
-	return (vulkan->result != VK_SUCCESS) ? false : true;
+	return vulkan->result;
     }
 #endif
 #endif
